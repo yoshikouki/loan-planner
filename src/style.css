@@ -33,33 +33,34 @@
 :root {
   color-scheme: dark;
 
-  --background: 222 47% 5%;
-  --foreground: 213 31% 91%;
+  /* High-contrast dark palette tuned for readability */
+  --background: 224 43% 6%;
+  --foreground: 214 41% 91%;
 
-  --card: 222 47% 7%;
-  --card-foreground: 213 31% 91%;
+  --card: 228 34% 10%;
+  --card-foreground: 214 36% 92%;
 
-  --popover: 222 47% 7%;
-  --popover-foreground: 213 31% 91%;
+  --popover: 228 34% 10%;
+  --popover-foreground: 214 36% 92%;
 
-  --muted: 217 32% 15%;
-  --muted-foreground: 214 20% 70%;
+  --muted: 225 30% 18%;
+  --muted-foreground: 216 20% 74%;
 
-  --accent: 199 89% 63%;
-  --accent-foreground: 210 40% 10%;
+  --accent: 199 92% 65%;
+  --accent-foreground: 218 40% 12%;
 
-  --primary: 199 93% 53%;
-  --primary-foreground: 198 100% 96%;
+  --primary: 199 100% 55%;
+  --primary-foreground: 205 100% 96%;
 
-  --secondary: 227 59% 12%;
-  --secondary-foreground: 213 31% 91%;
+  --secondary: 230 31% 20%;
+  --secondary-foreground: 214 36% 92%;
 
-  --destructive: 358 75% 60%;
+  --destructive: 357 82% 63%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 219 41% 19%;
-  --input: 219 41% 17%;
-  --ring: 199 93% 53%;
+  --border: 227 30% 26%;
+  --input: 227 28% 22%;
+  --ring: 199 100% 60%;
 }
 
 [data-theme="light"] {
