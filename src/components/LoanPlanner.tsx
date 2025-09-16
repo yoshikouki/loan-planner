@@ -237,17 +237,17 @@ const NumberField = ({
   }, [onChange, value, min, max]);
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+    <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
       <div className="flex items-center justify-between gap-4">
-        <label className="text-sm font-medium text-slate-200" htmlFor={fieldId}>
+        <label className="text-sm font-medium text-foreground" htmlFor={fieldId}>
           {label}
         </label>
-        <span className="text-xs text-slate-400">{formattedValue}</span>
+        <span className="text-xs text-muted-foreground">{formattedValue}</span>
       </div>
       {showSlider ? (
         <input
           aria-label={label}
-          className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-800 accent-sky-400"
+          className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
           id={sliderId}
           max={max}
           min={min}
@@ -259,7 +259,7 @@ const NumberField = ({
       ) : null}
       <div className="mt-4 flex items-center gap-3">
         <input
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-right text-sm text-slate-100 shadow-inner focus:border-sky-400 focus:outline-none"
+          className="flex-1 rounded-xl border border-border/70 bg-card px-3 py-2 text-right text-sm text-foreground shadow-inner focus:border-primary focus:outline-none"
           id={fieldId}
           inputMode="decimal"
           max={max}
@@ -270,10 +270,10 @@ const NumberField = ({
           type="number"
           value={Number.isNaN(value) ? "" : value}
         />
-        {suffix ? <span className="text-sm text-slate-400">{suffix}</span> : null}
+        {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
       </div>
       {description ? (
-        <p className="mt-3 text-xs leading-relaxed text-slate-400">{description}</p>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{description}</p>
       ) : null}
     </div>
   );
@@ -288,17 +288,17 @@ const StatTile = ({
   value: string;
   description?: string;
 }) => (
-  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-    <p className="text-xs uppercase tracking-widest text-slate-400">{label}</p>
+  <div className="rounded-2xl border border-border/60 bg-card/70 p-4">
+    <p className="text-xs uppercase tracking-widest text-muted-foreground">{label}</p>
     <motion.p
       animate={{ opacity: 1, y: 0 }}
-      className="mt-2 text-2xl font-semibold text-slate-100"
+      className="mt-2 text-2xl font-semibold text-foreground"
       initial={{ opacity: 0, y: 10 }}
       transition={{ duration: 0.3 }}
     >
       {value}
     </motion.p>
-    {description ? <p className="mt-2 text-xs text-slate-400">{description}</p> : null}
+    {description ? <p className="mt-2 text-xs text-muted-foreground">{description}</p> : null}
   </div>
 );
 
@@ -523,32 +523,34 @@ const LoanPlanner = () => {
     : undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background text-foreground">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
         <motion.header
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-lg backdrop-blur"
+          className="rounded-3xl border border-border/60 bg-card/70 p-8 shadow-lg backdrop-blur"
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.4 }}
         >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="flex items-center gap-2 text-sm font-medium text-sky-400">
+              <p className="flex items-center gap-2 text-sm font-medium text-primary">
                 <SparklesIcon className="h-4 w-4" />
                 数字を触るたびに最新のローン推計が手に入ります
               </p>
               <h1 className="mt-4 text-3xl font-semibold sm:text-4xl">
                 あなたにフィットするローンプランを、少ない操作で。
               </h1>
-              <p className="mt-4 max-w-2xl text-sm text-slate-300">
+              <p className="mt-4 max-w-2xl text-sm text-muted-foreground">
                 物件価格や金利、繰上げ返済を調整するとリアルタイムに返済額が更新されます。
                 好みの設定や試した履歴はブラウザに保存され、いつでも削除できます。
               </p>
             </div>
-            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/70 text-slate-100 shadow-inner lg:w-64">
-              <CalculatorIcon className="mr-3 h-6 w-6 text-sky-400" />
+            <div className="flex h-20 w-full items-center justify-center rounded-2xl border border-border/60 bg-card/80 text-foreground shadow-inner lg:w-64">
+              <CalculatorIcon className="mr-3 h-6 w-6 text-primary" />
               <div>
-                <p className="text-xs uppercase tracking-widest text-slate-400">現在の毎月返済額</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  現在の毎月返済額
+                </p>
                 <p className="text-lg font-semibold">{monthlyPayment}</p>
               </div>
             </div>
@@ -558,14 +560,14 @@ const LoanPlanner = () => {
             {PRESETS.map((preset) => (
               <button
                 key={preset.id}
-                className="group flex items-center gap-3 rounded-full border border-slate-800 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-200 shadow-sm transition hover:border-sky-400 hover:bg-slate-900"
+                className="group flex items-center gap-3 rounded-full border border-border/60 bg-card/70 px-4 py-2 text-sm font-medium text-foreground shadow-sm transition hover:border-primary hover:bg-card"
                 onClick={() => setInputs({ ...preset.values })}
                 type="button"
               >
-                <SparklesIcon className="h-4 w-4 text-sky-400 transition group-hover:scale-110" />
+                <SparklesIcon className="h-4 w-4 text-primary transition group-hover:scale-110" />
                 <span>
                   {preset.label}
-                  <span className="ml-2 hidden text-xs text-slate-400 sm:inline">
+                  <span className="ml-2 hidden text-xs text-muted-foreground sm:inline">
                     {preset.description}
                   </span>
                 </span>
@@ -578,16 +580,16 @@ const LoanPlanner = () => {
           <section className="space-y-8">
             <motion.section
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg"
+              className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-lg"
               initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="flex items-center gap-3 text-lg font-semibold text-slate-100">
-                  <Settings2Icon className="h-5 w-5 text-sky-400" /> 借入条件
+                <h2 className="flex items-center gap-3 text-lg font-semibold text-foreground">
+                  <Settings2Icon className="h-5 w-5 text-primary" /> 借入条件
                 </h2>
                 <button
-                  className="flex items-center gap-2 text-sm text-slate-400 transition hover:text-slate-200"
+                  className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
                   onClick={inputControls.reset}
                   type="button"
                 >
@@ -664,16 +666,16 @@ const LoanPlanner = () => {
 
             <motion.section
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl"
+              className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-xl"
               initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.2, duration: 0.3 }}
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="flex items-center gap-3 text-lg font-semibold text-slate-100">
-                  <CalculatorIcon className="h-5 w-5 text-sky-400" /> 推計結果
+                <h2 className="flex items-center gap-3 text-lg font-semibold text-foreground">
+                  <CalculatorIcon className="h-5 w-5 text-primary" /> 推計結果
                 </h2>
                 <button
-                  className="flex items-center gap-2 rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-200 transition hover:border-sky-400 hover:text-sky-300"
+                  className="flex items-center gap-2 rounded-full border border-border/70 px-4 py-2 text-sm text-foreground transition hover:border-primary hover:text-primary/70"
                   onClick={pushHistory}
                   type="button"
                 >
@@ -696,41 +698,41 @@ const LoanPlanner = () => {
                 />
               </div>
 
-              <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-950/40 p-5">
-                <p className="flex items-center gap-2 text-sm font-medium text-slate-200">
-                  <ArrowRightLeft className="h-4 w-4 text-sky-400" /> 頭金比率
+              <div className="mt-8 rounded-2xl border border-border/60 bg-card/50 p-5">
+                <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <ArrowRightLeft className="h-4 w-4 text-primary" /> 頭金比率
                 </p>
-                <p className="mt-3 text-3xl font-semibold text-slate-100">{downPaymentRatio}</p>
-                <p className="mt-2 text-xs text-slate-400">
+                <p className="mt-3 text-3xl font-semibold text-foreground">{downPaymentRatio}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
                   頭金 {currencyFormatter.format(inputs.downPayment)} / 借入額{" "}
                   {currencyFormatter.format(computation.principal)}
                 </p>
               </div>
 
               {computation.accelerated ? (
-                <div className="mt-8 grid gap-4 rounded-2xl border border-sky-900/60 bg-sky-900/20 p-5 md:grid-cols-2">
+                <div className="mt-8 grid gap-4 rounded-2xl border border-primary/30 bg-primary/20 p-5 md:grid-cols-2">
                   <div>
-                    <p className="flex items-center gap-2 text-sm font-semibold text-sky-200">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-primary/80">
                       <Clock4Icon className="h-4 w-4" /> 繰上げ返済ありのプラン
                     </p>
-                    <p className="mt-4 text-sm text-sky-100">毎月の追加返済 {extraMonthly}</p>
-                    <p className="mt-2 text-sm text-sky-100">
+                    <p className="mt-4 text-sm text-primary/90">毎月の追加返済 {extraMonthly}</p>
+                    <p className="mt-2 text-sm text-primary/90">
                       合計返済額 {currencyFormatter.format(computation.accelerated.totalPayment)}
                     </p>
-                    <p className="mt-2 text-xs text-sky-200/80">
+                    <p className="mt-2 text-xs text-primary/75">
                       完済まで {integerFormatter.format(acceleratedPayoff?.years ?? 0)}年{" "}
                       {integerFormatter.format(acceleratedPayoff?.months ?? 0)}か月（予定:{" "}
                       {acceleratedPayoffDate}）
                     </p>
                   </div>
-                  <div className="rounded-2xl border border-sky-800/70 bg-slate-950/40 p-4">
-                    <p className="text-xs uppercase tracking-widest text-sky-200/70">
+                  <div className="rounded-2xl border border-primary/40 bg-card/50 p-4">
+                    <p className="text-xs uppercase tracking-widest text-primary/70">
                       期待できる効果
                     </p>
-                    <p className="mt-3 text-2xl font-semibold text-sky-100">
+                    <p className="mt-3 text-2xl font-semibold text-primary/90">
                       利息 {acceleratedInterestSaved} 削減
                     </p>
-                    <p className="mt-2 text-sm text-sky-100">
+                    <p className="mt-2 text-sm text-primary/90">
                       返済期間 {integerFormatter.format(monthsSavedBreakdown?.years ?? 0)}年{" "}
                       {integerFormatter.format(monthsSavedBreakdown?.months ?? 0)}か月短縮
                     </p>
@@ -743,16 +745,16 @@ const LoanPlanner = () => {
           <section className="space-y-8">
             <motion.section
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl"
+              className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-xl"
               initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.15, duration: 0.3 }}
             >
               <div className="flex items-center justify-between gap-4">
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
-                  <HistoryIcon className="h-5 w-5 text-sky-400" /> シミュレーション履歴
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <HistoryIcon className="h-5 w-5 text-primary" /> シミュレーション履歴
                 </h2>
                 <button
-                  className="flex items-center gap-2 rounded-full border border-slate-700 px-3 py-1.5 text-xs text-slate-300 transition hover:border-red-500 hover:text-red-400"
+                  className="flex items-center gap-2 rounded-full border border-border/70 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-destructive hover:text-destructive"
                   onClick={historyControls.reset}
                   type="button"
                 >
@@ -760,14 +762,14 @@ const LoanPlanner = () => {
                 </button>
               </div>
 
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-muted-foreground">
                 変更内容は{settings.autoSaveHistory ? "自動的に" : "ボタンから"}保存されます。最大{" "}
                 {settings.historyLimit} 件まで保持します。
               </p>
 
               <ul className="mt-4 space-y-3">
                 {history.length === 0 ? (
-                  <li className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  <li className="rounded-2xl border border-dashed border-border/70 bg-card/50 p-4 text-sm text-muted-foreground">
                     まだ履歴はありません。条件を調整するとここに保存されます。
                   </li>
                 ) : (
@@ -776,28 +778,28 @@ const LoanPlanner = () => {
                     return (
                       <li
                         key={item.id}
-                        className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 p-4"
+                        className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card/60 p-4"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div>
-                            <p className="text-sm font-semibold text-slate-100">
+                            <p className="text-sm font-semibold text-foreground">
                               {currencyFormatter.format(item.summary.base.monthlyPayment)} / 月
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-muted-foreground">
                               {payoff.years}年 {payoff.months}か月・
                               {formatDateTime(item.createdAt, settings.locale)} 保存
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
-                              className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 transition hover:border-sky-400 hover:text-sky-300"
+                              className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground transition hover:border-primary hover:text-primary/70"
                               onClick={() => handleApplyHistory(item)}
                               type="button"
                             >
                               適用
                             </button>
                             <button
-                              className="rounded-full border border-slate-800 px-2 py-1 text-xs text-slate-500 transition hover:border-red-500 hover:text-red-400"
+                              className="rounded-full border border-border/60 px-2 py-1 text-xs text-muted-foreground/80 transition hover:border-destructive hover:text-destructive"
                               onClick={() => handleDeleteHistoryItem(item.id)}
                               type="button"
                             >
@@ -805,7 +807,7 @@ const LoanPlanner = () => {
                             </button>
                           </div>
                         </div>
-                        <div className="grid gap-2 text-xs text-slate-400 md:grid-cols-2">
+                        <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
                           <span>
                             物件 {currencyFormatter.format(item.inputs.purchasePrice)} / 頭金{" "}
                             {currencyFormatter.format(item.inputs.downPayment)}
@@ -824,16 +826,16 @@ const LoanPlanner = () => {
 
             <motion.section
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl"
+              className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-xl"
               initial={{ opacity: 0, y: 20 }}
               transition={{ delay: 0.25, duration: 0.3 }}
             >
               <div className="flex items-center justify-between gap-4">
-                <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-100">
-                  <Settings2Icon className="h-5 w-5 text-sky-400" /> 表示・保存設定
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                  <Settings2Icon className="h-5 w-5 text-primary" /> 表示・保存設定
                 </h2>
                 <button
-                  className="flex items-center gap-2 text-xs text-slate-400 transition hover:text-slate-200"
+                  className="flex items-center gap-2 text-xs text-muted-foreground transition hover:text-foreground"
                   onClick={settingsControls.reset}
                   type="button"
                 >
@@ -841,11 +843,13 @@ const LoanPlanner = () => {
                 </button>
               </div>
 
-              <div className="mt-4 space-y-4 text-sm text-slate-200">
+              <div className="mt-4 space-y-4 text-sm text-foreground">
                 <label className="flex flex-col gap-2">
-                  <span className="text-xs uppercase tracking-widest text-slate-400">通貨</span>
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    通貨
+                  </span>
                   <select
-                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                    className="rounded-xl border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                     onChange={(event) => handleCurrencyChange(event.target.value as CurrencyCode)}
                     value={settings.currency}
                   >
@@ -858,9 +862,11 @@ const LoanPlanner = () => {
                 </label>
 
                 <label className="flex flex-col gap-2">
-                  <span className="text-xs uppercase tracking-widest text-slate-400">表示言語</span>
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    表示言語
+                  </span>
                   <select
-                    className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 focus:border-sky-400 focus:outline-none"
+                    className="rounded-xl border border-border/70 bg-card px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
                     onChange={(event) => handleLocaleChange(event.target.value)}
                     value={settings.locale}
                   >
@@ -872,16 +878,16 @@ const LoanPlanner = () => {
                   </select>
                 </label>
 
-                <label className="flex items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm">
+                <label className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-card/60 px-4 py-3 text-sm">
                   <div>
-                    <p className="font-medium text-slate-100">自動保存を有効にする</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="font-medium text-foreground">自動保存を有効にする</p>
+                    <p className="text-xs text-muted-foreground">
                       入力が止まると約 {HISTORY_SNAPSHOT_DELAY}ms 後に履歴へ保存します。
                     </p>
                   </div>
                   <input
                     checked={settings.autoSaveHistory}
-                    className="h-5 w-10 cursor-pointer appearance-none rounded-full border border-slate-700 bg-slate-800 transition checked:border-sky-500 checked:bg-sky-500"
+                    className="h-5 w-10 cursor-pointer appearance-none rounded-full border border-border/70 bg-muted transition checked:border-primary checked:bg-primary"
                     onChange={(event) =>
                       setSettings((prev) => ({
                         ...prev,
@@ -892,16 +898,18 @@ const LoanPlanner = () => {
                   />
                 </label>
 
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
+                <div className="rounded-2xl border border-border/60 bg-card/60 p-4">
                   <label
-                    className="flex items-center justify-between text-sm text-slate-200"
+                    className="flex items-center justify-between text-sm text-foreground"
                     htmlFor={historyLimitId}
                   >
                     <span>履歴の保存件数（最大 20 件）</span>
-                    <span className="text-xs text-slate-400">{settings.historyLimit} 件</span>
+                    <span className="text-xs text-muted-foreground">
+                      {settings.historyLimit} 件
+                    </span>
                   </label>
                   <input
-                    className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-800 accent-sky-400"
+                    className="mt-3 h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
                     id={historyLimitId}
                     max={20}
                     min={1}
@@ -914,7 +922,7 @@ const LoanPlanner = () => {
               </div>
 
               <button
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-600/70 bg-red-600/20 px-4 py-3 text-sm font-medium text-red-300 transition hover:bg-red-600/30"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/80 bg-destructive/20 px-4 py-3 text-sm font-medium text-destructive/80 transition hover:bg-destructive/30"
                 onClick={handleClearAll}
                 type="button"
               >

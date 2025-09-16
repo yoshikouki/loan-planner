@@ -1,17 +1,108 @@
 @import "tailwindcss";
 
+/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind theme design tokens */
+@theme {
+  --font-sans:
+    "Inter", "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius: 16px;
+  --radius-lg: calc(var(--radius) + 8px);
+}
+
 :root {
   color-scheme: dark;
-  background-color: #020617;
+
+  --background: 222 47% 5%;
+  --foreground: 213 31% 91%;
+
+  --card: 222 47% 7%;
+  --card-foreground: 213 31% 91%;
+
+  --popover: 222 47% 7%;
+  --popover-foreground: 213 31% 91%;
+
+  --muted: 217 32% 15%;
+  --muted-foreground: 214 20% 70%;
+
+  --accent: 199 89% 63%;
+  --accent-foreground: 210 40% 10%;
+
+  --primary: 199 93% 53%;
+  --primary-foreground: 198 100% 96%;
+
+  --secondary: 227 59% 12%;
+  --secondary-foreground: 213 31% 91%;
+
+  --destructive: 358 75% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 219 41% 19%;
+  --input: 219 41% 17%;
+  --ring: 199 93% 53%;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+
+  --primary: 199 93% 53%;
+  --primary-foreground: 198 100% 96%;
+
+  --secondary: 210 14% 93%;
+  --secondary-foreground: 222 47% 11%;
+
+  --destructive: 358 75% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 199 93% 53%;
 }
 
 body {
   margin: 0;
-  font-family:
-    "Inter", "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #020617;
-  color: #e2e8f0;
+  font-family: var(--font-sans);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   line-height: 1.6;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
 }
 
 a {
@@ -23,4 +114,5 @@ input,
 select,
 textarea {
   font: inherit;
+  color: inherit;
 }
