@@ -2,22 +2,36 @@
 
 import {
   ArrowRightLeft,
+  BarChart3Icon,
   CalculatorIcon,
   Clock4Icon,
   HistoryIcon,
   RefreshCwIcon,
   Settings2Icon,
   SparklesIcon,
+  TableIcon,
   Trash2Icon,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { type ChangeEvent, useCallback, useEffect, useId, useMemo, useRef } from "react";
+import { type ChangeEvent, Fragment, useCallback, useEffect, useId, useMemo, useRef } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { usePersistentState } from "../hooks/usePersistentState";
 import {
   calculateLoan,
   type LoanComputation,
   type LoanInputs,
+  type LoanSummary,
   monthsToYearsMonths,
+  summarizeLoan,
 } from "../utils/loan";
 
 type CurrencyCode = "JPY" | "USD" | "EUR";
@@ -33,7 +47,7 @@ interface LoanHistoryItem {
   id: string;
   createdAt: string;
   inputs: LoanInputs;
-  summary: LoanComputation;
+  summary: LoanSummary;
 }
 
 const STORAGE_KEYS = {
@@ -43,6 +57,7 @@ const STORAGE_KEYS = {
 } as const;
 
 const HISTORY_SNAPSHOT_DELAY = 700;
+const TIMELINE_PREVIEW_LIMIT = 12;
 
 const currencyOptions: Array<{ value: CurrencyCode; label: string }> = [
   { value: "JPY", label: "日本円" },
@@ -179,14 +194,35 @@ const createHistoryItem = (inputs: LoanInputs, summary: LoanComputation): LoanHi
     id,
     createdAt: new Date().toISOString(),
     inputs: { ...inputs },
-    summary: {
-      principal: summary.principal,
-      downPaymentRatio: summary.downPaymentRatio,
-      base: { ...summary.base },
-      accelerated: summary.accelerated ? { ...summary.accelerated } : undefined,
-    },
+    summary: summarizeLoan(summary),
   };
 };
+
+interface ChartDatum {
+  monthIndex: number;
+  yearIndex: number;
+  baseBalance: number;
+  baseTotalInterest: number;
+  acceleratedBalance?: number;
+  acceleratedTotalInterest?: number;
+}
+
+interface TableRow {
+  monthIndex: number;
+  yearIndex: number;
+  base: {
+    payment: number;
+    principal: number;
+    interest: number;
+    balance: number;
+  };
+  accelerated?: {
+    payment: number;
+    principal: number;
+    interest: number;
+    balance: number;
+  };
+}
 
 interface NumberFieldProps {
   id: string;
@@ -324,11 +360,110 @@ const LoanPlanner = () => {
   const termYearsId = useId();
   const extraPaymentId = useId();
   const historyLimitId = useId();
+  const baseGradientId = useId();
+  const acceleratedGradientId = useId();
 
   const allHydrated =
     inputControls.hydrated && settingsControls.hydrated && historyControls.hydrated;
 
   const computation = useMemo(() => calculateLoan(inputs), [inputs]);
+  const hasAcceleratedPlan = Boolean(computation.accelerated);
+
+  const chartData = useMemo<ChartDatum[]>(() => {
+    const basePoints = computation.base.schedule;
+    const acceleratedPoints = computation.accelerated?.schedule ?? [];
+
+    if (basePoints.length === 0) {
+      return [];
+    }
+
+    const finalAccelerated = acceleratedPoints.length
+      ? acceleratedPoints[acceleratedPoints.length - 1]
+      : undefined;
+
+    let accIndex = 0;
+    let lastKnownAccelerated: (typeof acceleratedPoints)[number] | undefined;
+
+    return basePoints.map((point) => {
+      while (
+        accIndex < acceleratedPoints.length &&
+        acceleratedPoints[accIndex].monthIndex <= point.monthIndex
+      ) {
+        lastKnownAccelerated = acceleratedPoints[accIndex];
+        accIndex += 1;
+      }
+
+      const acceleratedPoint =
+        acceleratedPoints.length > 0 ? (lastKnownAccelerated ?? finalAccelerated) : undefined;
+
+      return {
+        monthIndex: point.monthIndex,
+        yearIndex: point.yearIndex,
+        baseBalance: point.balance,
+        baseTotalInterest: point.totalInterestPaid,
+        acceleratedBalance: acceleratedPoint?.balance,
+        acceleratedTotalInterest: acceleratedPoint?.totalInterestPaid,
+      } satisfies ChartDatum;
+    });
+  }, [computation]);
+
+  const timelineRows = useMemo<TableRow[]>(() => {
+    const basePoints = computation.base.schedule;
+    const acceleratedPoints = computation.accelerated?.schedule ?? [];
+
+    if (basePoints.length === 0) {
+      return [];
+    }
+
+    const selection = basePoints.slice(0, TIMELINE_PREVIEW_LIMIT);
+    const finalPoint = basePoints[basePoints.length - 1];
+    if (
+      finalPoint &&
+      (!selection.length || selection[selection.length - 1].monthIndex !== finalPoint.monthIndex)
+    ) {
+      selection.push(finalPoint);
+    }
+
+    const finalAccelerated = acceleratedPoints.length
+      ? acceleratedPoints[acceleratedPoints.length - 1]
+      : undefined;
+
+    let accIndex = 0;
+    let lastKnownAccelerated: (typeof acceleratedPoints)[number] | undefined;
+
+    return selection.map((point) => {
+      while (
+        accIndex < acceleratedPoints.length &&
+        acceleratedPoints[accIndex].monthIndex <= point.monthIndex
+      ) {
+        lastKnownAccelerated = acceleratedPoints[accIndex];
+        accIndex += 1;
+      }
+
+      const acceleratedPoint =
+        acceleratedPoints.length > 0 ? (lastKnownAccelerated ?? finalAccelerated) : undefined;
+
+      return {
+        monthIndex: point.monthIndex,
+        yearIndex: point.yearIndex,
+        base: {
+          payment: point.payment,
+          principal: point.principalPayment,
+          interest: point.interestPayment,
+          balance: point.balance,
+        },
+        accelerated: acceleratedPoint
+          ? {
+              payment: acceleratedPoint.payment,
+              principal: acceleratedPoint.principalPayment,
+              interest: acceleratedPoint.interestPayment,
+              balance: acceleratedPoint.balance,
+            }
+          : undefined,
+      } satisfies TableRow;
+    });
+  }, [computation]);
+  const showCollapsedNotice = computation.base.schedule.length > timelineRows.length;
 
   const currencyFormatter = useMemo(
     () => toCurrencyFormatter(settings.locale, settings.currency),
@@ -336,6 +471,55 @@ const LoanPlanner = () => {
   );
   const percentFormatter = useMemo(() => toPercentFormatter(settings.locale, 1), [settings.locale]);
   const integerFormatter = useMemo(() => toNumberFormatter(settings.locale, 0), [settings.locale]);
+  const formatMonthTick = useCallback((value: number) => {
+    if (!Number.isFinite(value)) {
+      return "";
+    }
+
+    if (value === 1) {
+      return "開始";
+    }
+
+    if ((value - 1) % 12 === 0) {
+      const year = Math.floor((value - 1) / 12) + 1;
+      return `${year}年`;
+    }
+
+    return "";
+  }, []);
+  const formatTooltipLabel = useCallback((value: number) => {
+    if (!Number.isFinite(value)) {
+      return "";
+    }
+
+    const years = Math.floor((value - 1) / 12);
+    const monthInYear = ((value - 1) % 12) + 1;
+
+    if (years === 0) {
+      return `${monthInYear}ヶ月目`;
+    }
+
+    return `${years}年${monthInYear}ヶ月目`;
+  }, []);
+  const tooltipFormatter = useCallback(
+    (value: number | string | Array<number | string>, name: string) => {
+      if (Array.isArray(value)) {
+        return value;
+      }
+
+      const labelMap: Record<string, string> = {
+        baseBalance: "基本プラン 残債",
+        acceleratedBalance: "繰上げプラン 残債",
+      };
+
+      const numeric = typeof value === "number" ? value : Number(value);
+      return [
+        currencyFormatter.format(Number.isFinite(numeric) ? numeric : 0),
+        labelMap[name] ?? name,
+      ];
+    },
+    [currencyFormatter],
+  );
 
   const basePayoff = monthsToYearsMonths(computation.base.payoffMonths);
   const acceleratedPayoff = computation.accelerated
@@ -739,6 +923,210 @@ const LoanPlanner = () => {
                   </div>
                 </div>
               ) : null}
+            </motion.section>
+
+            <motion.section
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-xl"
+              initial={{ opacity: 0, y: 20 }}
+              transition={{ delay: 0.25, duration: 0.3 }}
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="flex items-center gap-3 text-lg font-semibold text-foreground">
+                  <BarChart3Icon className="h-5 w-5 text-primary" /> 返済の推移
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  借入条件を変えるとグラフとサマリーが即座に更新されます。
+                </span>
+              </div>
+
+              <div className="mt-6 h-72 w-full">
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id={baseGradientId} x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0.05} />
+                        </linearGradient>
+                        <linearGradient id={acceleratedGradientId} x1="0" x2="0" y1="0" y2="1">
+                          <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.45} />
+                          <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0.08} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        stroke="var(--color-border)"
+                        strokeDasharray="3 3"
+                        strokeOpacity={0.3}
+                        vertical={false}
+                      />
+                      <XAxis
+                        axisLine={false}
+                        dataKey="monthIndex"
+                        minTickGap={24}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
+                        tickFormatter={formatMonthTick}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
+                        tickFormatter={(value: number) => currencyFormatter.format(value)}
+                        tickLine={false}
+                        width={110}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "var(--color-card)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: 12,
+                          color: "var(--color-foreground)",
+                        }}
+                        formatter={tooltipFormatter}
+                        labelFormatter={formatTooltipLabel}
+                      />
+                      <Legend
+                        wrapperStyle={{ color: "var(--color-muted-foreground)", fontSize: 12 }}
+                      />
+                      <Area
+                        dot={false}
+                        fill={`url(#${baseGradientId})`}
+                        name="基本プラン 残債"
+                        stroke="var(--color-primary)"
+                        strokeWidth={2}
+                        type="monotone"
+                        dataKey="baseBalance"
+                      />
+                      {hasAcceleratedPlan ? (
+                        <Area
+                          dot={false}
+                          fill={`url(#${acceleratedGradientId})`}
+                          name="繰上げプラン 残債"
+                          stroke="var(--color-accent)"
+                          strokeWidth={2}
+                          type="monotone"
+                          dataKey="acceleratedBalance"
+                        />
+                      ) : null}
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm text-muted-foreground">
+                    頭金と借入条件に応じて返済スケジュールが表示されます。
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 rounded-2xl border border-border/60 bg-card/60 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <TableIcon className="h-4 w-4 text-primary" /> 月別スナップショット
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  直近{TIMELINE_PREVIEW_LIMIT}
+                  か月分と最終月を表示。詳細を確認したい場合は入力値を微調整して結果を観察してください。
+                </p>
+
+                {timelineRows.length > 0 ? (
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full min-w-[680px] text-xs">
+                      <thead>
+                        <tr className="border-b border-border/40 text-left text-muted-foreground">
+                          <th className="py-2 pr-4 font-medium">月</th>
+                          <th className="py-2 pr-4 font-medium text-right">支払い額 (基本)</th>
+                          <th className="py-2 pr-4 font-medium text-right">元金 (基本)</th>
+                          <th className="py-2 pr-4 font-medium text-right">利息 (基本)</th>
+                          <th className="py-2 pr-4 font-medium text-right">残債 (基本)</th>
+                          {hasAcceleratedPlan ? (
+                            <>
+                              <th className="py-2 pr-4 font-medium text-right">
+                                支払い額 (繰上げ)
+                              </th>
+                              <th className="py-2 pr-4 font-medium text-right">元金 (繰上げ)</th>
+                              <th className="py-2 pr-4 font-medium text-right">利息 (繰上げ)</th>
+                              <th className="py-2 pr-4 font-medium text-right">残債 (繰上げ)</th>
+                            </>
+                          ) : null}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {timelineRows.map((row, index) => {
+                          const isFinalRow =
+                            computation.base.payoffMonths > 0 &&
+                            row.monthIndex === computation.base.payoffMonths;
+                          const year =
+                            row.monthIndex > 0 ? Math.floor((row.monthIndex - 1) / 12) : 0;
+                          const monthInYear =
+                            row.monthIndex > 0 ? ((row.monthIndex - 1) % 12) + 1 : 0;
+                          const label =
+                            row.monthIndex <= 0
+                              ? "-"
+                              : isFinalRow
+                                ? "完済"
+                                : year === 0
+                                  ? `${monthInYear}ヶ月目`
+                                  : `${year}年${monthInYear}ヶ月目`;
+                          const rowBackground = isFinalRow
+                            ? "bg-primary/15 text-primary"
+                            : index % 2 === 0
+                              ? "bg-card/30"
+                              : "bg-card/10";
+
+                          return (
+                            <Fragment key={`${row.monthIndex}-${index}`}>
+                              {showCollapsedNotice &&
+                              index === timelineRows.length - 1 &&
+                              timelineRows.length > 1 ? (
+                                <tr className="border-t border-border/40 text-center text-muted-foreground">
+                                  <td className="py-3" colSpan={hasAcceleratedPlan ? 9 : 5}>
+                                    … 中間の月次データはグラフで確認できます …
+                                  </td>
+                                </tr>
+                              ) : null}
+                              <tr className={`border-t border-border/40 ${rowBackground}`}>
+                                <td className="whitespace-nowrap py-3 pr-4 text-left font-medium text-foreground">
+                                  {label}
+                                </td>
+                                <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                  {currencyFormatter.format(row.base.payment)}
+                                </td>
+                                <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                  {currencyFormatter.format(row.base.principal)}
+                                </td>
+                                <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                  {currencyFormatter.format(row.base.interest)}
+                                </td>
+                                <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                  {currencyFormatter.format(row.base.balance)}
+                                </td>
+                                {hasAcceleratedPlan ? (
+                                  <>
+                                    <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                      {currencyFormatter.format(row.accelerated?.payment ?? 0)}
+                                    </td>
+                                    <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                      {currencyFormatter.format(row.accelerated?.principal ?? 0)}
+                                    </td>
+                                    <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                      {currencyFormatter.format(row.accelerated?.interest ?? 0)}
+                                    </td>
+                                    <td className="whitespace-nowrap py-3 pr-4 text-right font-mono">
+                                      {currencyFormatter.format(row.accelerated?.balance ?? 0)}
+                                    </td>
+                                  </>
+                                ) : null}
+                              </tr>
+                            </Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="mt-6 rounded-xl border border-dashed border-border/60 bg-card/40 p-4 text-center text-sm text-muted-foreground">
+                    頭金が物件価格を上回っているため返済スケジュールは不要です。
+                  </p>
+                )}
+              </div>
             </motion.section>
           </section>
 
