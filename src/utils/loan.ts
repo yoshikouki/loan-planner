@@ -15,16 +15,44 @@ export interface AmortizationSnapshot {
   payoffMonths: number;
 }
 
-export interface AcceleratedAmortization extends AmortizationSnapshot {
+export interface AmortizationPoint {
+  monthIndex: number;
+  yearIndex: number;
+  payment: number;
+  principalPayment: number;
+  interestPayment: number;
+  balance: number;
+  totalPrincipalPaid: number;
+  totalInterestPaid: number;
+}
+
+export interface DetailedAmortization extends AmortizationSnapshot {
+  schedule: AmortizationPoint[];
+}
+
+export interface AcceleratedAmortization extends DetailedAmortization {
   monthlyPaymentWithExtra: number;
   interestSaved: number;
   monthsSaved: number;
 }
 
-export interface LoanComputation {
+export interface AcceleratedAmortizationSummary extends AmortizationSnapshot {
+  monthlyPaymentWithExtra: number;
+  interestSaved: number;
+  monthsSaved: number;
+}
+
+export interface LoanSummary {
   principal: number;
   downPaymentRatio: number;
   base: AmortizationSnapshot;
+  accelerated?: AcceleratedAmortizationSummary;
+}
+
+export interface LoanComputation {
+  principal: number;
+  downPaymentRatio: number;
+  base: DetailedAmortization;
   accelerated?: AcceleratedAmortization;
 }
 
@@ -32,6 +60,11 @@ interface AmortizationResult {
   payoffMonths: number;
   totalInterest: number;
   totalPayment: number;
+}
+
+interface AmortizationCalculation {
+  summary: AmortizationResult;
+  schedule: AmortizationPoint[];
 }
 
 const MAX_MONTHS = 1000 * 12;
@@ -42,21 +75,27 @@ function amortize(
   monthlyRate: number,
   scheduledPayment: number,
   extraPayment: number,
-): AmortizationResult {
+): AmortizationCalculation {
   if (principal <= 0) {
     return {
-      payoffMonths: 0,
-      totalInterest: 0,
-      totalPayment: 0,
+      summary: {
+        payoffMonths: 0,
+        totalInterest: 0,
+        totalPayment: 0,
+      },
+      schedule: [],
     };
   }
 
   const payment = scheduledPayment + Math.max(0, extraPayment);
   if (payment <= 0) {
     return {
-      payoffMonths: Number.POSITIVE_INFINITY,
-      totalInterest: Number.POSITIVE_INFINITY,
-      totalPayment: Number.POSITIVE_INFINITY,
+      summary: {
+        payoffMonths: Number.POSITIVE_INFINITY,
+        totalInterest: Number.POSITIVE_INFINITY,
+        totalPayment: Number.POSITIVE_INFINITY,
+      },
+      schedule: [],
     };
   }
 
@@ -64,6 +103,7 @@ function amortize(
   let payoffMonths = 0;
   let totalInterest = 0;
   let totalPayment = 0;
+  const schedule: AmortizationPoint[] = [];
 
   while (balance > EPSILON && payoffMonths < MAX_MONTHS) {
     const interest = monthlyRate > 0 ? balance * monthlyRate : 0;
@@ -76,9 +116,12 @@ function amortize(
 
     if (principalPayment <= 0) {
       return {
-        payoffMonths: Number.POSITIVE_INFINITY,
-        totalInterest: Number.POSITIVE_INFINITY,
-        totalPayment: Number.POSITIVE_INFINITY,
+        summary: {
+          payoffMonths: Number.POSITIVE_INFINITY,
+          totalInterest: Number.POSITIVE_INFINITY,
+          totalPayment: Number.POSITIVE_INFINITY,
+        },
+        schedule: [],
       };
     }
 
@@ -90,20 +133,37 @@ function amortize(
     totalPayment += actualPayment;
     balance -= principalPayment;
     payoffMonths += 1;
+
+    schedule.push({
+      monthIndex: payoffMonths,
+      yearIndex: Math.floor((payoffMonths - 1) / 12) + 1,
+      payment: actualPayment,
+      principalPayment,
+      interestPayment: interest,
+      balance: Math.max(balance, 0),
+      totalPrincipalPaid: principal - Math.max(balance, 0),
+      totalInterestPaid: totalInterest,
+    });
   }
 
   if (payoffMonths >= MAX_MONTHS) {
     return {
-      payoffMonths: Number.POSITIVE_INFINITY,
-      totalInterest: Number.POSITIVE_INFINITY,
-      totalPayment: Number.POSITIVE_INFINITY,
+      summary: {
+        payoffMonths: Number.POSITIVE_INFINITY,
+        totalInterest: Number.POSITIVE_INFINITY,
+        totalPayment: Number.POSITIVE_INFINITY,
+      },
+      schedule: [],
     };
   }
 
   return {
-    payoffMonths,
-    totalInterest,
-    totalPayment,
+    summary: {
+      payoffMonths,
+      totalInterest,
+      totalPayment,
+    },
+    schedule,
   };
 }
 
@@ -130,36 +190,41 @@ export function calculateLoan(inputs: LoanInputs): LoanComputation {
 
   const baseSchedule = amortize(principal, monthlyRate, scheduledPayment, 0);
 
-  let acceleratedSchedule: AmortizationResult | undefined;
+  let acceleratedSchedule: AmortizationCalculation | undefined;
   if (extraPayment > 0) {
     acceleratedSchedule = amortize(principal, monthlyRate, scheduledPayment, extraPayment);
   }
 
-  const base: AmortizationSnapshot = {
+  const base: DetailedAmortization = {
     monthlyPayment: scheduledPayment,
-    totalPayment: baseSchedule.totalPayment,
-    totalInterest: baseSchedule.totalInterest,
-    payoffMonths: baseSchedule.payoffMonths,
+    totalPayment: baseSchedule.summary.totalPayment,
+    totalInterest: baseSchedule.summary.totalInterest,
+    payoffMonths: baseSchedule.summary.payoffMonths,
+    schedule: baseSchedule.schedule,
   };
 
   let accelerated: AcceleratedAmortization | undefined;
 
-  if (acceleratedSchedule && Number.isFinite(acceleratedSchedule.payoffMonths)) {
+  if (acceleratedSchedule && Number.isFinite(acceleratedSchedule.summary.payoffMonths)) {
     const monthlyPaymentWithExtra = scheduledPayment + extraPayment;
-    const monthsSaved = Math.max(baseSchedule.payoffMonths - acceleratedSchedule.payoffMonths, 0);
+    const monthsSaved = Math.max(
+      baseSchedule.summary.payoffMonths - acceleratedSchedule.summary.payoffMonths,
+      0,
+    );
     const interestSaved = Math.max(
-      baseSchedule.totalInterest - acceleratedSchedule.totalInterest,
+      baseSchedule.summary.totalInterest - acceleratedSchedule.summary.totalInterest,
       0,
     );
 
     accelerated = {
       monthlyPayment: scheduledPayment,
       monthlyPaymentWithExtra,
-      totalPayment: acceleratedSchedule.totalPayment,
-      totalInterest: acceleratedSchedule.totalInterest,
-      payoffMonths: acceleratedSchedule.payoffMonths,
+      totalPayment: acceleratedSchedule.summary.totalPayment,
+      totalInterest: acceleratedSchedule.summary.totalInterest,
+      payoffMonths: acceleratedSchedule.summary.payoffMonths,
       interestSaved,
       monthsSaved,
+      schedule: acceleratedSchedule.schedule,
     };
   }
 
@@ -172,6 +237,28 @@ export function calculateLoan(inputs: LoanInputs): LoanComputation {
     accelerated,
   };
 }
+
+export const summarizeLoan = (details: LoanComputation): LoanSummary => ({
+  principal: details.principal,
+  downPaymentRatio: details.downPaymentRatio,
+  base: {
+    monthlyPayment: details.base.monthlyPayment,
+    totalPayment: details.base.totalPayment,
+    totalInterest: details.base.totalInterest,
+    payoffMonths: details.base.payoffMonths,
+  },
+  accelerated: details.accelerated
+    ? {
+        monthlyPayment: details.accelerated.monthlyPayment,
+        monthlyPaymentWithExtra: details.accelerated.monthlyPaymentWithExtra,
+        totalPayment: details.accelerated.totalPayment,
+        totalInterest: details.accelerated.totalInterest,
+        payoffMonths: details.accelerated.payoffMonths,
+        interestSaved: details.accelerated.interestSaved,
+        monthsSaved: details.accelerated.monthsSaved,
+      }
+    : undefined,
+});
 
 export function monthsToYearsMonths(months: number): { years: number; months: number } {
   if (!Number.isFinite(months)) {

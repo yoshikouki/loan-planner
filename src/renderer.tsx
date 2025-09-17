@@ -16,7 +16,7 @@ export const renderer = reactRenderer(({ children }) => {
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
       </head>
-      <body className="antialiased selection:bg-sky-500/30 selection:text-slate-100">
+      <body className="antialiased selection:bg-primary/30 selection:text-primary-foreground">
         {children}
       </body>
     </html>

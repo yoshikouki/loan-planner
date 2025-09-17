@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateLoan, type LoanInputs, monthsToYearsMonths } from "./loan";
+import { calculateLoan, type LoanInputs, monthsToYearsMonths, summarizeLoan } from "./loan";
 
 describe("calculateLoan", () => {
   it("computes amortization snapshot with extra payments", () => {
@@ -17,14 +17,29 @@ describe("calculateLoan", () => {
     expect(result.base.payoffMonths).toBe(35 * 12);
     expect(result.base.monthlyPayment).toBeGreaterThan(0);
     expect(result.base.totalPayment).toBeGreaterThan(result.principal);
+    expect(result.base.schedule.length).toBe(result.base.payoffMonths);
+    expect(result.base.schedule[0].balance).toBeLessThan(result.principal);
+    expect(result.base.schedule[result.base.schedule.length - 1].balance).toBeCloseTo(0, 5);
 
     expect(result.accelerated).toBeDefined();
-    expect(result.accelerated?.monthlyPaymentWithExtra).toBeCloseTo(
+    const accelerated = result.accelerated;
+    if (!accelerated) {
+      return;
+    }
+
+    expect(accelerated.monthlyPaymentWithExtra).toBeCloseTo(
       result.base.monthlyPayment + inputs.extraMonthlyPayment,
       2,
     );
-    expect(result.accelerated?.payoffMonths).toBeLessThan(result.base.payoffMonths);
-    expect(result.accelerated?.interestSaved).toBeGreaterThan(0);
+    expect(accelerated.payoffMonths).toBeLessThan(result.base.payoffMonths);
+    expect(accelerated.interestSaved).toBeGreaterThan(0);
+    expect(accelerated.schedule.length).toBe(accelerated.payoffMonths);
+    expect(accelerated.schedule[accelerated.schedule.length - 1]?.balance).toBeCloseTo(0, 5);
+
+    const summary = summarizeLoan(result);
+    expect(summary.base.monthlyPayment).toBe(result.base.monthlyPayment);
+    expect(summary.base.payoffMonths).toBe(result.base.payoffMonths);
+    expect(summary.base).not.toHaveProperty("schedule");
   });
 
   it("handles zero interest without NaN", () => {
@@ -41,6 +56,8 @@ describe("calculateLoan", () => {
     expect(result.base.monthlyPayment).toBeCloseTo(25000, 2);
     expect(result.base.totalInterest).toBe(0);
     expect(result.base.totalPayment).toBeCloseTo(inputs.purchasePrice, 2);
+    expect(result.base.schedule.length).toBe(result.base.payoffMonths);
+    expect(result.base.schedule[0].interestPayment).toBe(0);
   });
 });
 
